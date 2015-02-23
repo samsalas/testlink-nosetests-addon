@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: iso-8859-1 -*-
+#--------------------PYTHON TESTS PACKAGES---------------------------------------------------------
+# To use the test commands you need the following packages
+#      - pip (if not installed) : download "get-pip.py" (https://bootstrap.pypa.io/get-pip.py),
+#        then move it where Python is installed (C:\Python27) 
+#        and launch "C:\Python27\Pyhton.exe get-pip.py"
+#      - nose : then launch "pip install nose"
+#      - nosexcover : then launch "pip install nosexcover"
+#      - pylint : then launch "pip install pylint"
+# Then you can do the following :
+# TEST REPORT :
+# C:\Python27\Scripts\nosetests -v .\TestCase.py --with-xunit
+# COVERAGE :
+# C:\Python27\Scripts\nosetests -v .\TestCase.py --with-xcoverage
+# TEST & COVERAGE :
+# C:\Python27\Scripts\nosetests -v .\TestCase.py --with-xunit --with-xcoverage
+# STATIC ANALYSE :
+# C:\Python27\Scripts\pylint -f parseable .\TestCase.py
+#--------------------------------------------------------------------------------------------------
+
