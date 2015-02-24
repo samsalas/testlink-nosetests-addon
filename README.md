@@ -6,4 +6,4 @@ You add the project in a directory yourtool.local/nosetest. You browe then into 
 The point of the addon is to provide easyly a Python testing script from the Test Plan to execute to the coding of the execution in Python. It is then possible to export the noestests results into JUnit format and Cobertura to benefit from the results.
 # Nosetest / Jenkins
 To use nosetests : <code>nosetests -v testplan.py</code>
-To link the results to jenkins, use the XML files produced by the command <code>nosetests -v testplan.py -xunit -xcoverage</code>. More details are in the headerPython.txt file.
+To link the results to jenkins, use the XML files produced by the command <code>nosetests -v testplan.py --with-xunit --with-xcoverage</code>. More details are in the headerPython.txt file.
