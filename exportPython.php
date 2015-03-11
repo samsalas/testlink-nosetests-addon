@@ -4,7 +4,7 @@
  * @brief Result page of the export into the Python File using the TestCase ID and the Test Plan XML File
  * From TestLink 1.9.12 XML TestSuite export 
  * @author Samuel Salas (2015)
- * @version 01.00
+ * @version 01.01
 */
 
 header('content-type: text/html; charset=utf-8');
@@ -71,8 +71,6 @@ try {
 // XML Reading functions
 // ----------------------------
 $python = simplexml_load_file($filenamepath);
-$testSuiteName = $python->testsuites->testsuite["name"];
-$testSuiteOrder = (int) $python->testsuites->testsuite->node_order;
 
 // ----------------------------
 // Global functions
@@ -157,8 +155,6 @@ if ($error_upload == "") {
    echo "Build : ";
    echo $python->build->name;
    echo "<br />\n";
-   echo "Testsuite : ".$testSuiteName."\n";
-   echo "<br />\n";
    echo "</div>\n";
 
    echo "<div class='subtitle'>\n";
@@ -166,44 +162,60 @@ if ($error_upload == "") {
    echo "</div>\n";
 
    echo "<pre style='text-align: center;'>";
-   $filename = "TestSuiste".sprintf('%03d', $testSuiteOrder)."_CaseAll.py";
-   echo "Download all the classes in one file <a href='exportPythonFile.php?testid=all&path=".$filenamepath."'>".$filename."</a>";
+   $filename = "TestSuites_AllCases.py";
+   echo "Download all the classes in one file <a href='exportPythonFile.php?testsuiteid=all&testcaseid=all&filename=".$filename."&path=".$filenamepath."'>".$filename."</a>";
    echo "</pre>\n";
-   // Loop on the test cases
-   foreach($python->testsuites->testsuite->testcase as $case) {
-      echo "<pre>";
-      echo "Test Case Name : ";
-      echo $case["name"];
-      echo "\n";
-      echo "Test Case ID : ";
-      $testSuiteId = $case["internalid"];
-      echo $testSuiteId;
-      echo "\n";
-      echo "Test Case Filename : ";
-      $filename = "TestSuiste".sprintf('%03d', $testSuiteOrder)."_Case".sprintf('%03d', $testSuiteId).".py";
-      echo "<a href='exportPythonFile.php?testid=".$testSuiteId."&path=".$filenamepath."'>".$filename."</a>";
-      echo "\n";
-      
-      echo "<code>\n";
-      echo class_python("TestCase".$case["internalid"]);
-      echo comment_class_python($case["name"]);
-      echo function_python("__init__");
-      echo "\t\t".keyword_python("pass")."\n\n";
+   // Loop on the test suites
+   foreach($python->testsuites->testsuite as $suite) {
+      echo "<div class='subtitle'>\n";
+      echo "Test Suite ".$suite["name"];
+      echo "</div>\n";
+      $testSuiteOrder = (int) $suite->node_order;
+      $testSuiteId = (string) $suite->node_order;
+      echo "<pre style='text-align: center;'>";
+      $filename = "TestSuite".sprintf('%03d', $testSuiteOrder)."_AllCases.py";
+      echo "Download all the classes of this Test Suite in one file <a href='exportPythonFile.php?testsuiteid=".$testSuiteId."&testcaseid=all&filename=".$filename."&path=".$filenamepath."'>".$filename."</a>";
+      echo "</pre>\n";
+      // Loop on the test cases
+      foreach($suite->testcase as $case) {
+         echo "<pre>";
+         echo "Test Case Name : ";
+         echo $case["name"];
+         echo "\n";
+         echo "Test Case ID : ";
+         $testCaseId = $case["internalid"];
+         echo $testCaseId;
+         echo "\n";
+         echo "Test Case Filename : ";
+         $filename = "TestSuite".sprintf('%03d', $testSuiteOrder)."_Case".sprintf('%03d', $testCaseId).".py";
+         echo "<a href='exportPythonFile.php?testsuiteid=".$testSuiteId."&testcaseid=".$testCaseId."&filename=".$filename."&path=".$filenamepath."'>".$filename."</a>";
+         echo "\n";
          
-      echo function_python("setUp");
-      echo "\t\t".keyword_python("pass")."\n\n";
-      
-      echo function_python("tearDown");
-      echo "\t\t".keyword_python("pass")."\n\n";
-      // Loop on the steps for each test case
-      foreach($case->steps->step as $step) {
-         echo function_python("test_".(string) $step->step_number);
-         $tmpStr = extract_tagsAndSpecialChar((string) $step->actions);
-         echo comment_def_python($tmpStr);
-         echo "\t\t".keyword_python("asset")." False ".span_color("#Expected result"." ".extract_tagsAndSpecialChar((string) $step->expectedresults), "#31B404");
-         echo "\n\n";
+         echo "<code>\n";
+         echo class_python("TestCase".$case["internalid"]);
+         echo comment_class_python($case["name"]);
+         echo function_python("__init__");
+         echo comment_def_python("Initialization of the class");
+         echo "\t\t".keyword_python("pass")."\n\n";
+            
+         echo function_python("setUp");
+         echo comment_def_python("Put here actions before the first test case");
+         echo "\t\t".keyword_python("pass")."\n\n";
+         
+         echo function_python("tearDown");
+         echo comment_def_python("Put here actions after the last test case");
+         echo "\t\t".keyword_python("pass")."\n\n";
+         
+         // Loop on the steps for each test case
+         foreach($case->steps->step as $step) {
+            echo function_python("test_".(string) $step->step_number);
+            $tmpStr = extract_tagsAndSpecialChar((string) $step->actions);
+            echo comment_def_python($tmpStr);
+            echo "\t\t".keyword_python("asset")." False ".span_color("#Expected result"." ".extract_tagsAndSpecialChar((string) $step->expectedresults), "#31B404");
+            echo "\n\n";
+         }
+         echo "</code></pre>\n";
       }
-      echo "</code></pre>\n";
    }
    
 } else {

@@ -4,25 +4,19 @@
  * @brief Allow to write the Python File using the TestCase ID and the Test Plan XML File
  * From TestLink 1.9.12 XML TestSuite export 
  * @author Samuel Salas (2015)
- * @version 01.00
+ * @version 01.01
 */
 header('content-type: plain/text; charset=utf-8');
 
 /* Receiving GET info */
+header("Content-Disposition: attachment; filename=".(string) $_GET["filename"]);
 $fichier = $_GET["path"];
-$testSuiteId = (int) $_GET["testid"];
-$testSuiteId_str = (string) $_GET["testid"];
+$testCaseId = (int) $_GET["testcaseid"];
+$testCaseId_str = (string) $_GET["testcaseid"];
+$testSuiteId = (int) $_GET["testsuiteid"];
+$testSuiteId_str = (string) $_GET["testsuiteid"];
 /* Reading Decription XML */
 $python = simplexml_load_file($fichier);
-$testSuiteName = $python->testsuites->testsuite["name"];
-$testSuiteOrder = (int) $python->testsuites->testsuite->node_order;
-if((string) $_GET["testid"] == "all") {
-   $filename = "TestSuite".sprintf('%03d', $testSuiteOrder)."_CaseAll.py";
-} else {
-   $filename = "TestSuite".sprintf('%03d', $testSuiteOrder)."_Case".sprintf('%03d', $testSuiteId).".py";
-}
-
-header("Content-Disposition: attachment; filename=".$filename);
 
 // ----------------------------
 // Global functions
@@ -53,6 +47,13 @@ function class_python($word) {
          ."(object):\n";
 }
 
+function comment_file_python($word) {
+   $retVal = '""" '."\n"
+            .'    '.$word."\n"
+            .'"""'."\n";
+   return $retVal;
+}
+
 function comment_class_python($word) {
    $retVal = "\t".'""" '.$word."\n"
             ."\t".'"""'."\n";
@@ -69,29 +70,42 @@ function comment_def_python($word) {
 // MAIN : writing the file
 // ----------------------------
 
-// Loop on the test case (filtering with the test case ID)
 include("headerPython.txt");
-foreach($python->testsuites->testsuite->testcase as $case) {
-   if(($case["internalid"] == $testSuiteId_str)||($testSuiteId_str == "all")) {
-      echo class_python("TestSuite".$case['internalid']);
-      echo comment_class_python($case["name"]);
-      echo function_python("__init__");
-      echo "\t\tpass\n\n";
-         
-      echo function_python("setUp");
-      echo "\t\tpass\n\n";
-      
-      echo function_python("tearDown");
-      echo "\t\tpass\n\n";
-      
-      foreach($case->steps->step as $step) {
-         echo function_python("test_".(string) $step->step_number);
-         $tmpStr = extract_tagsAndSpecialChar((string) $step->actions);
-         echo comment_def_python($tmpStr);
-         echo "\t\tasset False #Expected result ".extract_tagsAndSpecialChar((string) $step->expectedresults);
-         echo "\n\n";
+// Loop on the test suites
+foreach($python->testsuites->testsuite as $suite) {
+   // filtering with the test suite node order
+   if(((int) $suite->node_order == $testSuiteId)||($testSuiteId_str == "all")) {
+      echo comment_file_python($suite["name"]);
+      // Loop on the test case (
+      foreach($suite->testcase as $case) {
+         // Filtering with the test case ID
+         if(($case["internalid"] == $testCaseId_str)||($testCaseId_str == "all")) {
+            echo class_python("TestCase".$case['internalid']);
+            echo comment_class_python($case["name"]);
+            echo function_python("__init__");
+            echo comment_def_python("Initialization of the class");
+            echo "\t\tpass\n\n";
+               
+            echo function_python("setUp");
+            echo comment_def_python("Put here actions before the first test case");
+            echo "\t\tpass\n\n";
+            
+            echo function_python("tearDown");
+            echo comment_def_python("Put here actions after the last test case");
+            echo "\t\tpass\n\n";
+            
+            foreach($case->steps->step as $step) {
+               echo function_python("test_".(string) $step->step_number);
+               $tmpStr = extract_tagsAndSpecialChar((string) $step->actions);
+               echo comment_def_python($tmpStr);
+               echo "\t\tasset False #Expected result ".extract_tagsAndSpecialChar((string) $step->expectedresults);
+               echo "\n\n";
+            }
+         }
       }
    }
 }
+
+
 
 ?>
